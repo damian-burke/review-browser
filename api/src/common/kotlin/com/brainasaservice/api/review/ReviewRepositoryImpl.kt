@@ -17,7 +17,7 @@ class ReviewRepositoryImpl @Inject constructor(
             page: Int,
             rating: Int,
             sortBy: ReviewSortBy,
-            direction: SortDirection
+            direction: ReviewSortDirection
     ): Single<List<Review>> {
         return reviewApi.getReviews(
                 location,
