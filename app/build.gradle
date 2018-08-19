@@ -1,0 +1,147 @@
+apply plugin: 'com.android.application'
+
+apply plugin: 'kotlin-android'
+
+apply plugin: 'kotlin-android-extensions'
+
+apply plugin: 'kotlin-kapt'
+
+def PROPERTIES_API_CONFIG = "../config/api.properties"
+def PROPERTIES_VERSION_CONFIG = "../config/version.properties"
+
+def _versionName = ""
+def _versionCode = Integer.valueOf(new Date().format("yyyyMMdd"))
+
+if (file(PROPERTIES_VERSION_CONFIG).canRead()) {
+    Properties props = new Properties()
+    props.load(file(PROPERTIES_VERSION_CONFIG).newInputStream())
+    def major = props['MAJOR'].toInteger()
+    def minor = props['MINOR'].toInteger()
+    def patch = props['PATCH'].toInteger()
+
+    _versionName = "${major}.${minor}.${patch}"
+    println("Configuring application with version ${_versionName} (${_versionCode})")
+} else {
+    throw new BuildCancelledException("Unable to read version configuration, make sure the property file exists: " + PROPERTIES_VERSION)
+}
+
+
+android {
+    compileSdkVersion rootProject.compileSdkVersion
+
+    defaultConfig {
+        applicationId "com.brainasaservice.reviewbrowser"
+        minSdkVersion rootProject.minSdkVersion
+        targetSdkVersion rootProject.targetSdkVersion
+        versionCode _versionCode
+        versionName _versionName
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    if (file(PROPERTIES_API_CONFIG).canRead()) {
+        println("Setting up configuration.")
+        Properties props = new Properties()
+        props.load(file(PROPERTIES_API_CONFIG).newInputStream())
+
+        android.defaultConfig.buildConfigField 'String', 'API_URI', '"' + props['API_URL'] + '"'
+    }
+
+    // flavor dimension for environment (staging, production, dev)
+    flavorDimensions "env"
+    productFlavors {
+        mock {
+            dimension "env"
+
+            applicationIdSuffix '.mock'
+            versionCode 1
+            versionName "1.0.0"
+        }
+
+        internal {
+            dimension "env"
+        }
+
+        production {
+            dimension "env"
+        }
+    }
+
+    sourceSets {
+        main.java.srcDirs += "src/main/kotlin"
+        androidTest.java.srcDirs += "src/androidTest/kotlin"
+
+        mock.java.srcDirs += "src/mock/kotlin"
+        internal.java.srcDirs += "src/common/kotlin"
+        production.java.srcDirs += "src/common/kotlin"
+    }
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation project(':common')
+    implementation project(':api')
+
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+    implementation "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
+
+    // SUPPORT LIBRARY
+    implementation "com.android.support:appcompat-v7:$support_version"
+    implementation "com.android.support:customtabs:$support_version"
+    implementation "com.android.support:design:$support_version"
+    implementation "com.android.support:design:$support_version"
+    implementation "com.android.support:cardview-v7:$support_version"
+    implementation "com.android.support:support-media-compat:$support_version"
+    implementation "com.android.support:support-v13:$support_version"
+
+    // Dagger core
+    kapt "com.google.dagger:dagger-compiler:$dagger_version"
+    implementation "com.google.dagger:dagger:$dagger_version"
+
+    // Dagger Android
+    kapt "com.google.dagger:dagger-android-processor:$dagger_version"
+    implementation "com.google.dagger:dagger-android-support:$dagger_version"
+
+    // ReactiveX
+    implementation "io.reactivex.rxjava2:rxjava:$rxjava_version"
+    implementation "io.reactivex.rxjava2:rxandroid:$rxandroid_version"
+
+    // Timber
+    implementation "com.jakewharton.timber:timber:$timber_version"
+
+    implementation "com.google.code.gson:gson:$gson_version"
+    implementation "com.squareup.retrofit2:retrofit:$retrofit_version"
+    implementation "com.squareup.retrofit2:converter-gson:$retrofit_version"
+    implementation "com.squareup.retrofit2:adapter-rxjava2:$retrofit_version"
+    implementation "com.squareup.okhttp3:logging-interceptor:$okhttp_version"
+
+    // Lifecycle
+    implementation "android.arch.lifecycle:runtime:$architecture_components_version"
+    implementation "android.arch.lifecycle:extensions:$architecture_components_version"
+    kapt "android.arch.lifecycle:compiler:$architecture_components_version"
+
+    // Unit Test
+    testImplementation "junit:junit:$junit_version"
+    testImplementation "org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version"
+    testImplementation "com.nhaarman:mockito-kotlin:$mockito_kotlin_version"
+    testImplementation "org.mockito:mockito-core:$mockito_version"
+    testImplementation("android.arch.core:core-testing:$architecture_components_version", {
+        exclude group: 'com.android.support', module: 'support-compat'
+        exclude group: 'com.android.support', module: 'support-annotations'
+        exclude group: 'com.android.support', module: 'support-core-utils'
+    })
+
+    // UI Test
+    androidTestImplementation "com.android.support:support-annotations:$support_version"
+    androidTestImplementation "com.android.support.test.espresso:espresso-core:$android_test_espresso_version"
+    androidTestImplementation "com.android.support.test.espresso:espresso-contrib:$android_test_espresso_version"
+    androidTestImplementation "com.android.support.test.espresso:espresso-intents:$android_test_espresso_version"
+    androidTestImplementation "com.android.support.test:runner:$android_test_runner_version"
+    androidTestImplementation "com.android.support.test:rules:$android_test_runner_version"
+    androidTestImplementation "com.azimolabs.conditionwatcher:conditionwatcher:$conditionwatcher_version"
+}
