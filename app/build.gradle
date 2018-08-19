@@ -82,6 +82,16 @@ android {
     }
 }
 
+afterEvaluate { project ->
+    task test(overwrite: true) {
+        dependsOn testProductionDebugUnitTest
+        doLast {
+
+        }
+    }
+}
+
+
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation project(':common')
